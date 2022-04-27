@@ -37,7 +37,7 @@ namespace HexToIntFast // Note: actual namespace depends on the project name.
         //[Benchmark]
         public int HexToIntNaive()
         {
-            return int.Parse(Hex.AsSpan(), System.Globalization.NumberStyles.HexNumber);
+            return int.Parse(Hex.AsSpan(), NumberStyles.HexNumber);
         }
         
         [Benchmark]
