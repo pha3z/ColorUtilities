@@ -17,8 +17,6 @@ namespace HexToIntFast // Note: actual namespace depends on the project name.
             //
             // Console.WriteLine(Yes.AsSpan().RRGGBBHexToRGB32());
             //
-            // Console.WriteLine(Yes.AsSpan().RRGGBBHexToRGB32_CacheOptimized());
-            //
             // return;
              
             BenchmarkRunner.Run<Bench>();
@@ -31,9 +29,9 @@ namespace HexToIntFast // Note: actual namespace depends on the project name.
     [DisassemblyDiagnoser(exportCombinedDisassemblyReport: true)]
     public class Bench
     {
-        private const string Hex = "a1234F";
+        private const string Hex = "123456";
 
-        //[Benchmark]
+        [Benchmark]
         public int HexToIntNaive()
         {
             return int.Parse(Hex.AsSpan(), NumberStyles.HexNumber);
@@ -44,12 +42,6 @@ namespace HexToIntFast // Note: actual namespace depends on the project name.
         {
             return Hex.AsSpan().RRGGBBHexToRGB32();
         }
-        
-        [Benchmark]
-        public int HexToIntTrumpMcD_CacheOptimized()
-        {
-            return Hex.AsSpan().RRGGBBHexToRGB32_CacheOptimized();
-        }
     }
     
     public static unsafe class HexHelpers
@@ -59,18 +51,14 @@ namespace HexToIntFast // Note: actual namespace depends on the project name.
 
         private static readonly int* HexTable;
 
-        private static readonly byte* HexTable2;
-
         static HexHelpers()
         {
             const int TotalEntries = 127 + 1;
 
-            HexTable = (int*) NativeMemory.AlignedAlloc((nuint) TotalEntries * sizeof(int), 64);
-            
-            HexTable2 = (byte*) NativeMemory.AllocZeroed((nuint) TotalEntries + 64);
-            
+            HexTable = (int*) NativeMemory.AllocZeroed((nuint) TotalEntries * sizeof(int) + 64);
+
             //Get the original addr of '0'
-            var ZeroPos = (nint) (HexTable2 + '0');
+            var ZeroPos = (nint) (HexTable + '0');
             
             //Get next aligned boundary
             var NewZeroPos = (ZeroPos + (64 - 1)) & ~(64 - 1);
@@ -78,29 +66,19 @@ namespace HexToIntFast // Note: actual namespace depends on the project name.
             var ByteOffset = NewZeroPos - ZeroPos;
 
             //We will never deallocate this, so don't bother storing original start
-            HexTable2 += ByteOffset;
-            
-            //This is important - For we set garbage data to pull from an index of 0!
-            //Naturally, we also want its underlying to be 0, negating the effect of
-            //our horizontal adds against garbage data
-            *HexTable = 0;
-            *HexTable2 = 0;
-            
+            HexTable += ByteOffset;
+
             byte HexVal = 0;
 
             for (var Current = '0'; Current <= '9'; Current++, HexVal++)
             {
                 HexTable[Current] = HexVal;
-                HexTable2[Current] = HexVal;
             }
 
             for (var Current = 'A'; Current <= 'F'; Current++, HexVal++)
             {
                 HexTable[Current] = HexVal;
                 HexTable[Current + UpperToLowerCaseOffset] = HexVal;
-                
-                HexTable2[Current] = HexVal;
-                HexTable2[Current + UpperToLowerCaseOffset] = HexVal;
             }
         }
         
@@ -108,48 +86,24 @@ namespace HexToIntFast // Note: actual namespace depends on the project name.
         public static int RRGGBBHexToRGB32(this ReadOnlySpan<char> HexSpan)
         {
             ref var FirstChar = ref MemoryMarshal.GetReference(HexSpan);
+
+            var TablePtr = HexTable;
             
-            var _0 = HexTable[FirstChar] << 20;
+            var _0 = TablePtr[FirstChar] << 20;
 
-            var _1 = HexTable[Unsafe.Add(ref FirstChar, 1)] << 16;
+            var _1 = TablePtr[Unsafe.Add(ref FirstChar, 1)] << 16;
 
-            var _2 = HexTable[Unsafe.Add(ref FirstChar, 2)] << 12;
+            var _2 = TablePtr[Unsafe.Add(ref FirstChar, 2)] << 12;
 
-            var _3 = HexTable[Unsafe.Add(ref FirstChar, 3)] << 8;
+            var _3 = TablePtr[Unsafe.Add(ref FirstChar, 3)] << 8;
 
-            var _4 = HexTable[Unsafe.Add(ref FirstChar, 4)] << 4;
+            var _4 = TablePtr[Unsafe.Add(ref FirstChar, 4)] << 4;
 
-            var _5 = HexTable[Unsafe.Add(ref FirstChar, 5)];
+            var _5 = TablePtr[Unsafe.Add(ref FirstChar, 5)];
 
             return _0 | _1 | _2 | _3 | _4 | _5;
         }
-        
 
-        public static int RRGGBBHexToRGB32_CacheOptimized(this ReadOnlySpan<char> HexSpan)
-        {
-            ref var FirstChar = ref MemoryMarshal.GetReference(HexSpan);
-            
-            var _0 = GetIntFromChar(FirstChar, HexTable2) << 20;
-
-            var _1 = GetIntFromChar(Unsafe.Add(ref FirstChar, 1), HexTable2) << 16;
-
-            var _2 = GetIntFromChar(Unsafe.Add(ref FirstChar, 2), HexTable2) << 12;
-
-            var _3 = GetIntFromChar(Unsafe.Add(ref FirstChar, 3), HexTable2) << 8;
-
-            var _4 = GetIntFromChar(Unsafe.Add(ref FirstChar, 4), HexTable2) << 4;
-
-            var _5 = GetIntFromChar(Unsafe.Add(ref FirstChar, 5), HexTable2);
-
-            return _0 | _1 | _2 | _3 | _4 | _5;
-
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            static int GetIntFromChar(char Char, byte* HexTablePtr)
-            {
-                return HexTablePtr[Char];
-            }
-        }
-        
         public static int RRGGBBAAHexToARGB32(this ReadOnlySpan<char> HexSpan)
         {
             ref var FirstChar = ref MemoryMarshal.GetReference(HexSpan);
