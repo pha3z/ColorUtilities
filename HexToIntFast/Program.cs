@@ -18,7 +18,7 @@ namespace HexToIntFast // Note: actual namespace depends on the project name.
             
             Console.WriteLine(int.Parse(Yes, NumberStyles.HexNumber));
             
-            Console.WriteLine(Yes.AsSpan().RRGGBBHexToRGB32());
+            Console.WriteLine(Yes.AsSpan().RRGGBBHexToRGB32_FallBack());
             
             Console.WriteLine(Yes.AsSpan().RRGGBBHexToRGB32_AVX2());
             
@@ -43,7 +43,7 @@ namespace HexToIntFast // Note: actual namespace depends on the project name.
         [Benchmark]
         public int HexToIntTrumpMcD()
         {
-            return Hex.AsSpan().RRGGBBHexToRGB32();
+            return Hex.AsSpan().RRGGBBHexToRGB32_FallBack();
         }
         
         [Benchmark]
@@ -56,11 +56,7 @@ namespace HexToIntFast // Note: actual namespace depends on the project name.
     public static unsafe class HexHelpers
     {
         //https://www.asciitable.com/
-        private const char StartingPoint = '0';
-
         private const int UpperToLowerCaseOffset = 'a' - 'A'; //This is a positive num
-
-        private const int NumNextToFirstLetterOffset = 'A' - ('9' + 1); //This is a positive num
 
         private static readonly int* HexTable;
 
@@ -92,34 +88,73 @@ namespace HexToIntFast // Note: actual namespace depends on the project name.
 
         public static int RRGGBBHexToRGB32(this ReadOnlySpan<char> HexSpan)
         {
+            if (Avx2.IsSupported)
+            {
+                return RRGGBBHexToRGB32_AVX2(HexSpan);
+            }
+
+            else
+            {
+                return RRGGBBHexToRGB32_FallBack(HexSpan);
+            }
+        }
+        
+        public static int RRGGBBAAHexToRGB32(this ReadOnlySpan<char> HexSpan)
+        {
+            if (Avx2.IsSupported)
+            {
+                return RRGGBBAAHexToARGB32_AVX2(HexSpan);
+            }
+
+            else
+            {
+                return RRGGBBAAHexToARGB32_FallBack(HexSpan);
+            }
+        }
+        
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static int RRGGBBHexToRGB32_FallBack(this ReadOnlySpan<char> HexSpan)
+        {
             ref var FirstChar = ref MemoryMarshal.GetReference(HexSpan);
             
-            var _0 = HexCharToInt(FirstChar) << 20;
+            var _0 = HexTable[FirstChar] << 20;
 
-            var _1 = HexCharToInt(Unsafe.Add(ref FirstChar, 1)) << 16;
+            var _1 = HexTable[Unsafe.Add(ref FirstChar, 1)] << 16;
 
-            var _2 = HexCharToInt(Unsafe.Add(ref FirstChar, 2)) << 12;
+            var _2 = HexTable[Unsafe.Add(ref FirstChar, 2)] << 12;
 
-            var _3 = HexCharToInt(Unsafe.Add(ref FirstChar, 3)) << 8;
+            var _3 = HexTable[Unsafe.Add(ref FirstChar, 3)] << 8;
 
-            var _4 = HexCharToInt(Unsafe.Add(ref FirstChar, 4)) << 4;
+            var _4 = HexTable[Unsafe.Add(ref FirstChar, 4)] << 4;
 
-            var _5 = HexCharToInt(Unsafe.Add(ref FirstChar, 5));
+            var _5 = HexTable[Unsafe.Add(ref FirstChar, 5)];
 
             return _0 | _1 | _2 | _3 | _4 | _5;
         }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static int HexCharToInt(char Val)
+        
+        public static int RRGGBBAAHexToARGB32_FallBack(this ReadOnlySpan<char> HexSpan)
         {
-            var IsLowerCaseMask = unchecked(('Z' - Val) >> 31);
+            ref var FirstChar = ref MemoryMarshal.GetReference(HexSpan);
             
-            var IsNonNumericMask = unchecked(('9' - Val) >> 31);
-            
-            return (Val - (UpperToLowerCaseOffset & IsLowerCaseMask) -
-                    (NumNextToFirstLetterOffset & IsNonNumericMask)) - StartingPoint;
-        }
+            var _0 = HexTable[FirstChar] << 20;
 
+            var _1 = HexTable[Unsafe.Add(ref FirstChar, 1)] << 16;
+
+            var _2 = HexTable[Unsafe.Add(ref FirstChar, 2)] << 12;
+
+            var _3 = HexTable[Unsafe.Add(ref FirstChar, 3)] << 8;
+
+            var _4 = HexTable[Unsafe.Add(ref FirstChar, 4)] << 4;
+
+            var _5 = HexTable[Unsafe.Add(ref FirstChar, 5)];
+            
+            var _6 = HexTable[Unsafe.Add(ref FirstChar, 6)] << 24;
+
+            var _7 = HexTable[Unsafe.Add(ref FirstChar, 7)] << 28;
+            
+            return _0 | _1 | _2 | _3 | _4 | _5 | _6 | _7;
+        }
+        
         public static int RRGGBBHexToRGB32_AVX2(this ReadOnlySpan<char> HexSpan)
         {
             var HexVec = //Back-tracking should prevent AV-ing
@@ -137,7 +172,7 @@ namespace HexToIntFast // Note: actual namespace depends on the project name.
             return Vector256.Sum(RHexVec);
         }
         
-        public static int RRGGBBAAHexToARGB32(this ReadOnlySpan<char> HexSpan)
+        public static int RRGGBBAAHexToARGB32_AVX2(this ReadOnlySpan<char> HexSpan)
         {
             //https://en.wikipedia.org/wiki/RGBA_color_model
             var HexVec = //Back-tracking should prevent AV-ing
