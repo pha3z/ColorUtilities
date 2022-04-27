@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang='en'>
+<head>
+<meta charset='utf-8' />
+<title>DisassemblyDiagnoser Output HexToIntFast.Bench-20220427-231345</title>
+
+<style type="text/css">
+    table { border-collapse: collapse; display: block; width: 100%; overflow: auto; }
+    td, th { padding: 6px 13px; border: 1px solid #ddd; text-align: left; }
+    tr { background-color: #fff; border-top: 1px solid #ccc; }
+    tr:nth-child(even) { background: #f8f8f8; }
+</style>
+</head>
+<body>
+<table>
+<thead>
+<tr><th colspan="2">HexToIntFast.Bench-20220427-231345</th></tr>
+<tr>
+<th>HexToIntTrumpMcD_AVX2 .NET 7.0.0 (7.0.22.15202), X64 RyuJIT</th>
+<th>HexToIntTrumpMcD_AVX2_V256Sum .NET 7.0.0 (7.0.22.15202), X64 RyuJIT</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="vertical-align:top;"><pre><code>
+HexToIntFast.Bench.HexToIntTrumpMcD_AVX2()
+sub       rsp,38
+xor       eax,eax
+mov       [rsp+28],rax
+mov       rcx,25C1E959F68
+mov       rcx,[rcx]
+add       rcx,0C
+mov       eax,6
+mov       [rsp+28],rcx
+mov       [rsp+30],eax
+lea       rcx,[rsp+28]
+call      HexToIntFast.HexHelpers.RRGGBBHexToRGB32_AVX2(System.ReadOnlySpan`1<Char>)
+nop
+add       rsp,38
+ret
+
+HexToIntFast.HexHelpers.RRGGBBHexToRGB32_AVX2(System.ReadOnlySpan`1<Char>)
+vzeroupper
+mov       rax,[rcx]
+vmovdqu   xmm0,xmmword ptr [rax+0FFFC]
+vpcmpgtw  xmm1,xmm0,[7FF7A44AF520]
+vpand     xmm1,xmm1,[7FF7A44AF530]
+vpsubw    xmm1,xmm0,xmm1
+vpcmpgtw  xmm0,xmm0,[7FF7A44AF540]
+vpand     xmm0,xmm0,[7FF7A44AF550]
+vpsubw    xmm0,xmm1,xmm0
+vpsubw    xmm0,xmm0,[7FF7A44AF560]
+vpand     xmm0,xmm0,[7FF7A44AF570]
+vpmovsxwd ymm0,xmm0
+vpsllvd   ymm0,ymm0,[7FF7A44AF580]
+vextracti128 xmm1,ymm0,1
+vpaddd    xmm0,xmm1,xmm0
+vphaddd   xmm0,xmm0,xmm0
+vphaddd   xmm0,xmm0,xmm0
+vmovd     eax,xmm0
+vzeroupper
+ret
+
+</code></pre></td>
+<td style="vertical-align:top;"><pre><code>
+HexToIntFast.Bench.HexToIntTrumpMcD_AVX2_V256Sum()
+sub       rsp,38
+xor       eax,eax
+mov       [rsp+28],rax
+mov       rcx,17BC61E9F68
+mov       rcx,[rcx]
+add       rcx,0C
+mov       eax,6
+mov       [rsp+28],rcx
+mov       [rsp+30],eax
+lea       rcx,[rsp+28]
+call      HexToIntFast.HexHelpers.RRGGBBHexToRGB32_AVX2_V256Sum(System.ReadOnlySpan`1<Char>)
+nop
+add       rsp,38
+ret
+
+HexToIntFast.HexHelpers.RRGGBBHexToRGB32_AVX2_V256Sum(System.ReadOnlySpan`1<Char>)
+vzeroupper
+mov       rax,[rcx]
+vmovdqu   xmm0,xmmword ptr [rax+0FFFC]
+vpcmpgtw  xmm1,xmm0,[7FF7A448ED40]
+vpand     xmm1,xmm1,[7FF7A448ED50]
+vpsubw    xmm1,xmm0,xmm1
+vpcmpgtw  xmm0,xmm0,[7FF7A448ED60]
+vpand     xmm0,xmm0,[7FF7A448ED70]
+vpsubw    xmm0,xmm1,xmm0
+vpsubw    xmm0,xmm0,[7FF7A448ED80]
+vpand     xmm0,xmm0,[7FF7A448ED90]
+vpmovsxwd ymm0,xmm0
+vpsllvd   ymm0,ymm0,[7FF7A448EDA0]
+vphaddd   ymm0,ymm0,ymm0
+vphaddd   ymm0,ymm0,ymm0
+vextractf128 xmm1,ymm0,1
+vpaddd    xmm0,xmm1,xmm0
+vmovd     eax,xmm0
+vzeroupper
+ret
+
+</code></pre></td>
+</tr>
+</tbody>
+</table>
+</body>
+</html>

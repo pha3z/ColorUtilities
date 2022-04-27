@@ -21,6 +21,8 @@ namespace HexToIntFast // Note: actual namespace depends on the project name.
             Console.WriteLine(Yes.AsSpan().RRGGBBHexToRGB32());
             
             Console.WriteLine(Yes.AsSpan().RRGGBBHexToRGB32_AVX2());
+            
+            Console.WriteLine(Yes.AsSpan().RRGGBBHexToRGB32_AVX2_2());
             #else
 
             try
@@ -48,7 +50,7 @@ namespace HexToIntFast // Note: actual namespace depends on the project name.
             return int.Parse(Hex.AsSpan(), NumberStyles.HexNumber);
         }
         
-        [Benchmark]
+        //[Benchmark]
         public int HexToIntTrumpMcD()
         {
             return Hex.AsSpan().RRGGBBHexToRGB32();
@@ -58,6 +60,12 @@ namespace HexToIntFast // Note: actual namespace depends on the project name.
         public int HexToIntTrumpMcD_AVX2()
         {
             return Hex.AsSpan().RRGGBBHexToRGB32_AVX2();
+        }
+        
+        [Benchmark]
+        public int HexToIntTrumpMcD_AVX2_V256Sum()
+        {
+            return Hex.AsSpan().RRGGBBHexToRGB32_AVX2_V256Sum();
         }
     }
     
@@ -110,15 +118,15 @@ namespace HexToIntFast // Note: actual namespace depends on the project name.
 
             var Sm0lVec = Vector128.LoadUnsafe(ref Unsafe.Subtract(ref Unsafe.As<char, short>(ref FirstChar), 2));
 
-            var IsLowerCaseVec = Vector128.GreaterThan(Sm0lVec, Vector128.Create((short) 'F'));
+            var IsLowerCaseVec = Avx2.CompareGreaterThan(Sm0lVec, Vector128.Create((short) 'F'));
             
-            var IsNonNumeric  = Vector128.GreaterThan(Sm0lVec, Vector128.Create((short) '9'));
+            var IsAlphabet  = Avx2.CompareGreaterThan(Sm0lVec, Vector128.Create((short) '9'));
 
-            Sm0lVec = Vector128.Subtract(Sm0lVec, Avx2.And(Vector128.Create((short) UpperToLowerCaseOffset),IsLowerCaseVec));
+            Sm0lVec = Avx2.Subtract(Sm0lVec, Avx2.And(Vector128.Create((short) UpperToLowerCaseOffset),IsLowerCaseVec));
             
-            Sm0lVec = Vector128.Subtract(Sm0lVec, Avx2.And(Vector128.Create((short) NumNextToFirstLetterOffset),IsNonNumeric));
-            
-            Sm0lVec = Vector128.Subtract(Sm0lVec, Vector128.Create((short) StartingPoint));
+            Sm0lVec = Avx2.Subtract(Sm0lVec, Avx2.And(Vector128.Create((short) NumNextToFirstLetterOffset),IsAlphabet));
+
+            Sm0lVec = Avx2.Subtract(Sm0lVec, Vector128.Create((short) StartingPoint));
 
             Sm0lVec = Avx2.And(Sm0lVec, Vector128.Create(0, 0, short.MaxValue, short.MaxValue, short.MaxValue, short.MaxValue, short.MaxValue, short.MaxValue));
             
@@ -144,6 +152,78 @@ namespace HexToIntFast // Note: actual namespace depends on the project name.
 
             return VecUpper[0];
         }
+        
+        public static int RRGGBBHexToRGB32_AVX2_V256Sum(this ReadOnlySpan<char> HexSpan)
+        {
+            ref var FirstChar = ref MemoryMarshal.GetReference(HexSpan);
+
+            var Sm0lVec = Vector128.LoadUnsafe(ref Unsafe.Subtract(ref Unsafe.As<char, short>(ref FirstChar), 2));
+
+            var IsLowerCaseVec = Avx2.CompareGreaterThan(Sm0lVec, Vector128.Create((short) 'F'));
+            
+            var IsAlphabet  = Avx2.CompareGreaterThan(Sm0lVec, Vector128.Create((short) '9'));
+
+            Sm0lVec = Avx2.Subtract(Sm0lVec, Avx2.And(Vector128.Create((short) UpperToLowerCaseOffset),IsLowerCaseVec));
+            
+            Sm0lVec = Avx2.Subtract(Sm0lVec, Avx2.And(Vector128.Create((short) NumNextToFirstLetterOffset),IsAlphabet));
+
+            Sm0lVec = Avx2.Subtract(Sm0lVec, Vector128.Create((short) StartingPoint));
+
+            Sm0lVec = Avx2.And(Sm0lVec, Vector128.Create(0, 0, short.MaxValue, short.MaxValue, short.MaxValue, short.MaxValue, short.MaxValue, short.MaxValue));
+            
+            var Vec = Avx2.ConvertToVector256Int32(Sm0lVec);
+            
+            Vec = Avx2.ShiftLeftLogicalVariable(Vec, Vector256.Create((uint) 0, 0, 20, 16, 12, 8, 4, 0));
+
+            return Vector256.Sum(Vec);
+        }
+        
+        // public static int RRGGBBHexToRGB32_AVX2_2(this ReadOnlySpan<char> HexSpan)
+        // {
+        //     ref var FirstChar = ref MemoryMarshal.GetReference(HexSpan);
+        //
+        //     var Sm0lVec = Vector128.LoadUnsafe(ref Unsafe.Subtract(ref Unsafe.As<char, short>(ref FirstChar), 2));
+        //
+        //     var IsLowerCaseVec = Avx2.CompareGreaterThan(Sm0lVec, Vector128.Create((short) 'F'));
+        //     
+        //     var IsAlphabet  = Avx2.CompareGreaterThan(Sm0lVec, Vector128.Create((short) '9'));
+        //
+        //     Sm0lVec = Avx2.Subtract(Sm0lVec, Avx2.And(Vector128.Create((short) UpperToLowerCaseOffset),IsLowerCaseVec));
+        //     
+        //     Sm0lVec = Avx2.Subtract(Sm0lVec, Avx2.And(Vector128.Create((short) NumNextToFirstLetterOffset),IsAlphabet));
+        //
+        //     var SPVec = Vector128.Create((short) StartingPoint);
+        //
+        //     var GarbageVec = Vector128.Create(0, 0, short.MaxValue, short.MaxValue, short.MaxValue, short.MaxValue, short.MaxValue, short.MaxValue);
+        //     
+        //     Sm0lVec = Avx2.Subtract(Sm0lVec, Avx2.BlendVariable(Sm0lVec, SPVec, GarbageVec));
+        //
+        //     //Sm0lVec = Avx2.Subtract(Sm0lVec, Vector128.Create((short) StartingPoint));
+        //
+        //     //Sm0lVec = Avx2.And(Sm0lVec, Vector128.Create(0, 0, short.MaxValue, short.MaxValue, short.MaxValue, short.MaxValue, short.MaxValue, short.MaxValue));
+        //     
+        //     var Vec = Avx2.ConvertToVector256Int32(Sm0lVec);
+        //     
+        //     Vec = Avx2.ShiftLeftLogicalVariable(Vec, Vector256.Create((uint) 0, 0, 20, 16, 12, 8, 4, 0));
+        //     
+        //     var VecUpper = Vec.GetUpper();
+        //
+        //     var VecLower = Vec.GetLower();
+        //
+        //     //(1, 2, 3, 4) | (5, 6, 7, 8)
+        //     //([1 + 2], [3 + 4], [5 + 6], [7 + 8])
+        //     VecUpper = Avx2.Add(VecUpper, VecLower);
+        //
+        //     //([1 + 2], [3 + 4], [5 + 6], [7 + 8]) | ([1 + 2], [3 + 4], [5 + 6], [7 + 8])
+        //     //([1 + 2 + 3 + 4], [5 + 6 + 7 + 8], [1 + 2 + 3 + 4], [5 + 6 + 7 + 8]) 
+        //     VecUpper = Avx2.HorizontalAdd(VecUpper, VecUpper);
+        //
+        //     //([1 + 2 + 3 + 4], [5 + 6 + 7 + 8], [1 + 2 + 3 + 4], [5 + 6 + 7 + 8]) | ([1 + 2 + 3 + 4], [5 + 6 + 7 + 8], [1 + 2 + 3 + 4], [5 + 6 + 7 + 8]) 
+        //     //([1 + 2 + 3 + 4 + 5 + 6 + 7 + 8], [1 + 2 + 3 + 4 + 5 + 6 + 7 + 8], [1 + 2 + 3 + 4 + 5 + 6 + 7 + 8], [1 + 2 + 3 + 4 + 5 + 6 + 7 + 8]) 
+        //     VecUpper = Avx2.HorizontalAdd(VecUpper, VecUpper);
+        //
+        //     return VecUpper[0];
+        // }
         
         public static int RRGGBBHexToRGB32(this ReadOnlySpan<char> HexSpan)
         {
