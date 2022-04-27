@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang='en'>
+<head>
+<meta charset='utf-8' />
+<title>DisassemblyDiagnoser Output HexToIntFast.Bench-20220427-152932</title>
+
+<style type="text/css">
+    table { border-collapse: collapse; display: block; width: 100%; overflow: auto; }
+    td, th { padding: 6px 13px; border: 1px solid #ddd; text-align: left; }
+    tr { background-color: #fff; border-top: 1px solid #ccc; }
+    tr:nth-child(even) { background: #f8f8f8; }
+</style>
+</head>
+<body>
+<table>
+<thead>
+<tr><th colspan="2">HexToIntFast.Bench-20220427-152932</th></tr>
+<tr>
+<th>HexToIntTrumpMcD .NET 7.0.0 (7.0.22.15202), X64 RyuJIT</th>
+<th>HexToIntTrumpMcD_CacheOptimized .NET 7.0.0 (7.0.22.15202), X64 RyuJIT</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="vertical-align:top;"><pre><code>
+HexToIntFast.Bench.HexToIntTrumpMcD()
+sub       rsp,38
+xor       eax,eax
+mov       [rsp+28],rax
+mov       rcx,24AC72E9F68
+mov       rcx,[rcx]
+add       rcx,0C
+mov       eax,6
+mov       [rsp+28],rcx
+mov       [rsp+30],eax
+lea       rcx,[rsp+28]
+call      HexToIntFast.HexHelpers.RRGGBBHexToRGB32(System.ReadOnlySpan`1<Char>)
+nop
+add       rsp,38
+ret
+
+HexToIntFast.HexHelpers.RRGGBBHexToRGB32(System.ReadOnlySpan`1<Char>)
+mov       rax,[rcx]
+movzx     edx,word ptr [rax]
+mov       rcx,24AAD957B00
+mov       edx,[rcx+rdx*4]
+shl       edx,14
+movzx     ecx,word ptr [rax+2]
+mov       r8,24AAD957B00
+mov       ecx,[r8+rcx*4]
+shl       ecx,10
+or        edx,ecx
+movzx     ecx,word ptr [rax+4]
+mov       ecx,[r8+rcx*4]
+shl       ecx,0C
+or        edx,ecx
+movzx     ecx,word ptr [rax+6]
+mov       ecx,[r8+rcx*4]
+shl       ecx,8
+or        edx,ecx
+movzx     ecx,word ptr [rax+8]
+mov       ecx,[r8+rcx*4]
+shl       ecx,4
+or        ecx,edx
+movzx     eax,word ptr [rax+0A]
+or        ecx,[r8+rax*4]
+mov       eax,ecx
+ret
+
+</code></pre></td>
+<td style="vertical-align:top;"><pre><code>
+HexToIntFast.Bench.HexToIntTrumpMcD_CacheOptimized()
+sub       rsp,38
+xor       eax,eax
+mov       [rsp+28],rax
+mov       rcx,1E4B21C9F68
+mov       rcx,[rcx]
+add       rcx,0C
+mov       eax,6
+mov       [rsp+28],rcx
+mov       [rsp+30],eax
+lea       rcx,[rsp+28]
+call      HexToIntFast.HexHelpers.RRGGBBHexToRGB32_CacheOptimized(System.ReadOnlySpan`1<Char>)
+nop
+add       rsp,38
+ret
+
+HexToIntFast.HexHelpers.RRGGBBHexToRGB32_CacheOptimized(System.ReadOnlySpan`1<Char>)
+mov       rax,[rcx]
+movzx     edx,word ptr [rax]
+mov       ecx,edx
+neg       ecx
+add       ecx,5A
+sar       ecx,1F
+and       ecx,20
+sub       edx,ecx
+movsxd    rdx,edx
+mov       rcx,1E4BA6EA950
+movzx     edx,byte ptr [rdx+rcx]
+shl       edx,14
+movzx     ecx,word ptr [rax+2]
+mov       r8d,ecx
+neg       r8d
+add       r8d,5A
+sar       r8d,1F
+and       r8d,20
+sub       ecx,r8d
+movsxd    rcx,ecx
+mov       r8,1E4BA6EA950
+movzx     ecx,byte ptr [rcx+r8]
+shl       ecx,10
+movzx     r8d,word ptr [rax+4]
+mov       r9d,r8d
+neg       r9d
+add       r9d,5A
+sar       r9d,1F
+and       r9d,20
+sub       r8d,r9d
+movsxd    r8,r8d
+mov       r9,1E4BA6EA950
+movzx     r8d,byte ptr [r8+r9]
+shl       r8d,0C
+movzx     r9d,word ptr [rax+6]
+mov       r10d,r9d
+neg       r10d
+add       r10d,5A
+sar       r10d,1F
+and       r10d,20
+sub       r9d,r10d
+movsxd    r9,r9d
+mov       r10,1E4BA6EA950
+movzx     r9d,byte ptr [r9+r10]
+shl       r9d,8
+movzx     r10d,word ptr [rax+8]
+mov       r11d,r10d
+neg       r11d
+add       r11d,5A
+sar       r11d,1F
+and       r11d,20
+sub       r10d,r11d
+movsxd    r10,r10d
+mov       r11,1E4BA6EA950
+movzx     r10d,byte ptr [r10+r11]
+shl       r10d,4
+movzx     eax,word ptr [rax+0A]
+or        edx,ecx
+or        edx,r8d
+or        edx,r9d
+or        r10d,edx
+mov       edx,eax
+neg       edx
+add       edx,5A
+sar       edx,1F
+and       edx,20
+sub       eax,edx
+cdqe
+movzx     eax,byte ptr [rax+r11]
+or        eax,r10d
+ret
+
+</code></pre></td>
+</tr>
+</tbody>
+</table>
+</body>
+</html>

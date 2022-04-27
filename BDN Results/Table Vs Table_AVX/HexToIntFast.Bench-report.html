@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang='en'>
+<head>
+<meta charset='utf-8' />
+<title>HexToIntFast.Bench-20220427-145333</title>
+
+<style type="text/css">
+	table { border-collapse: collapse; display: block; width: 100%; overflow: auto; }
+	td, th { padding: 6px 13px; border: 1px solid #ddd; text-align: right; }
+	tr { background-color: #fff; border-top: 1px solid #ccc; }
+	tr:nth-child(even) { background: #f8f8f8; }
+</style>
+</head>
+<body>
+<pre><code>
+BenchmarkDotNet=v0.13.1, OS=Windows 10.0.19043.1586 (21H1/May2021Update)
+Intel Core i5-6300U CPU 2.40GHz (Skylake), 1 CPU, 4 logical and 2 physical cores
+.NET SDK=7.0.100-preview.2.22153.17
+  [Host]     : .NET 7.0.0 (7.0.22.15202), X64 RyuJIT
+  DefaultJob : .NET 7.0.0 (7.0.22.15202), X64 RyuJIT
+</code></pre>
+<pre><code></code></pre>
+
+<table>
+<thead><tr><th>         Method</th><th>Mean</th><th>Error</th><th>StdDev</th><th>Code Size</th><th>Allocated</th>
+</tr>
+</thead><tbody><tr><td>HexToIntTrumpMcD</td><td>2.189 ns</td><td>0.0160 ns</td><td>0.0133 ns</td><td>149 B</td><td>-</td>
+</tr><tr><td>HexToIntTrumpMcD_AVX2</td><td>3.942 ns</td><td>0.0133 ns</td><td>0.0118 ns</td><td>143 B</td><td>-</td>
+</tr></tbody></table>
+</body>
+</html>
