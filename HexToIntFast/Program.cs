@@ -69,7 +69,7 @@ namespace HexToIntFast // Note: actual namespace depends on the project name.
         }
     }
     
-    public static unsafe class HexHelpers
+    public static unsafe class ColorUtilities
     {
         //https://www.asciitable.com/
         private const char StartingPoint = '0';
@@ -80,7 +80,7 @@ namespace HexToIntFast // Note: actual namespace depends on the project name.
 
         private static readonly int* HexTable;
 
-        static HexHelpers()
+        static ColorUtilities()
         {
             //Don't allocate HexTable if there's AVX2 support!
             if (!Avx2.IsSupported)
