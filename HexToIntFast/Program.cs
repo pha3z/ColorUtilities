@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Drawing;
+using System.Globalization;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Runtime.Intrinsics;
@@ -12,13 +14,17 @@ namespace HexToIntFast // Note: actual namespace depends on the project name.
     {
         static void Main(string[] args)
         {
-            // Console.WriteLine("a1234F".HexToInt());
+            const string Yes = "a1234F";
+            
+            Console.WriteLine(int.Parse(Yes, NumberStyles.HexNumber));
+            
+            Console.WriteLine(Yes.AsSpan().RRGGBBHexToRGB32());
+            
+            Console.WriteLine(Yes.AsSpan().RRGGBBHexToRGB32_AVX2());
+            
+            // BenchmarkRunner.Run<Bench>();
             //
-            // Console.WriteLine("a1234F".HexToIntAVX2());
-            
-            BenchmarkRunner.Run<Bench>();
-            
-            while (true);
+            // while (true);
         }
     }
 
@@ -31,19 +37,19 @@ namespace HexToIntFast // Note: actual namespace depends on the project name.
         //[Benchmark]
         public int HexToIntNaive()
         {
-            return int.Parse(Hex, System.Globalization.NumberStyles.HexNumber);
+            return int.Parse(Hex.AsSpan(), System.Globalization.NumberStyles.HexNumber);
         }
         
         [Benchmark]
         public int HexToIntTrumpMcD()
         {
-            return Hex.HexToInt();
+            return Hex.AsSpan().RRGGBBHexToRGB32();
         }
         
         [Benchmark]
         public int HexToIntTrumpMcD_AVX2()
         {
-            return Hex.HexToIntAVX2();
+            return Hex.AsSpan().RRGGBBHexToRGB32_AVX2();
         }
     }
     
@@ -84,49 +90,40 @@ namespace HexToIntFast // Note: actual namespace depends on the project name.
             }
         }
 
-        public static int HexToInt(this string HexString)
+        public static int RRGGBBHexToRGB32(this ReadOnlySpan<char> HexSpan)
         {
-            fixed (char* FirstChar = HexString)
-            {
-                var _0 = HexCharToInt(FirstChar) << 20;
+            ref var FirstChar = ref MemoryMarshal.GetReference(HexSpan);
+            
+            var _0 = HexCharToInt(FirstChar) << 20;
 
-                var _1 = HexCharToInt(FirstChar + 1) << 16;
+            var _1 = HexCharToInt(Unsafe.Add(ref FirstChar, 1)) << 16;
 
-                var _2 = HexCharToInt(FirstChar + 2) << 12;
+            var _2 = HexCharToInt(Unsafe.Add(ref FirstChar, 2)) << 12;
 
-                var _3 = HexCharToInt(FirstChar + 3) << 8;
+            var _3 = HexCharToInt(Unsafe.Add(ref FirstChar, 3)) << 8;
 
-                var _4 = HexCharToInt(FirstChar + 4) << 4;
+            var _4 = HexCharToInt(Unsafe.Add(ref FirstChar, 4)) << 4;
 
-                var _5 = HexCharToInt(FirstChar + 5);
+            var _5 = HexCharToInt(Unsafe.Add(ref FirstChar, 5));
 
-                return _0 | _1 | _2 | _3 | _4 | _5;
-            }
+            return _0 | _1 | _2 | _3 | _4 | _5;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static int HexCharToInt(char* Char)
+        private static int HexCharToInt(char Val)
         {
-            var Val = *Char;
-
-            //Console.WriteLine(Val);
-
             var IsLowerCaseMask = unchecked(('Z' - Val) >> 31);
-
-            //Console.WriteLine($"Is Lower-Case: {IsLowerCaseMask}");
-
+            
             var IsNonNumericMask = unchecked(('9' - Val) >> 31);
-
-            //Console.WriteLine($"Is Non-Numeric: {IsNonNumericMask}");
-
+            
             return (Val - (UpperToLowerCaseOffset & IsLowerCaseMask) -
                     (NumNextToFirstLetterOffset & IsNonNumericMask)) - StartingPoint;
         }
 
-        public static int HexToIntAVX2(this string HexString)
+        public static int RRGGBBHexToRGB32_AVX2(this ReadOnlySpan<char> HexSpan)
         {
             var HexVec = //Back-tracking should prevent AV-ing
-                Vector128.LoadUnsafe(ref Unsafe.Subtract(ref Unsafe.As<char, short>(ref MemoryMarshal.GetReference(HexString.AsSpan())), 2));
+                Vector128.LoadUnsafe(ref Unsafe.Subtract(ref Unsafe.As<char, short>(ref MemoryMarshal.GetReference(HexSpan)), 2));
 
             HexVec = Vector128.BitwiseAnd(HexVec,
                 Vector128.Create(0, 0, short.MaxValue, short.MaxValue, short.MaxValue, short.MaxValue, short.MaxValue, short.MaxValue));
@@ -137,23 +134,24 @@ namespace HexToIntFast // Note: actual namespace depends on the project name.
 
             RHexVec = Avx2.ShiftLeftLogicalVariable(RHexVec, Vector256.Create((uint) 0, 0, 20, 16, 12, 8, 4, 0));
 
-            var RHexVecUpper = RHexVec.GetUpper();
+            return Vector256.Sum(RHexVec);
+        }
+        
+        public static int RRGGBBAAHexToARGB32(this ReadOnlySpan<char> HexSpan)
+        {
+            //https://en.wikipedia.org/wiki/RGBA_color_model
+            var HexVec = //Back-tracking should prevent AV-ing
+                Vector128.LoadUnsafe(ref Unsafe.As<char, short>(ref MemoryMarshal.GetReference(HexSpan)));
 
-            var RHexVecLower = RHexVec.GetLower();
+            var RHexVec = Avx2.ConvertToVector256Int32(HexVec);
 
-            //(1, 2, 3, 4) | (5, 6, 7, 8)
-            //([1 + 2], [3 + 4], [5 + 6], [7 + 8])
-            RHexVecUpper = Avx2.HorizontalAdd(RHexVecUpper, RHexVecLower);
+            RHexVec = Avx2.GatherVector256(HexTable, RHexVec, 4);
 
-            //([1 + 2], [3 + 4], [5 + 6], [7 + 8]) | ([1 + 2], [3 + 4], [5 + 6], [7 + 8])
-            //([1 + 2 + 3 + 4], [5 + 6 + 7 + 8], [1 + 2 + 3 + 4], [5 + 6 + 7 + 8]) 
-            RHexVecUpper = Avx2.HorizontalAdd(RHexVecUpper, RHexVecLower);
+            RHexVec = Avx2.ShiftLeftLogicalVariable(RHexVec, Vector256.Create((uint) 20, 16, 12, 8, 4, 0, 28, 24));
 
-            //([1 + 2 + 3 + 4], [5 + 6 + 7 + 8], [1 + 2 + 3 + 4], [5 + 6 + 7 + 8]) | ([1 + 2 + 3 + 4], [5 + 6 + 7 + 8], [1 + 2 + 3 + 4], [5 + 6 + 7 + 8]) 
-            //([1 + 2 + 3 + 4 + 5 + 6 + 7 + 8], [1 + 2 + 3 + 4 + 5 + 6 + 7 + 8], [1 + 2 + 3 + 4 + 5 + 6 + 7 + 8], [1 + 2 + 3 + 4 + 5 + 6 + 7 + 8]) 
-            RHexVecUpper = Avx2.HorizontalAdd(RHexVecUpper, RHexVecLower);
+            //RHexVec = Avx2.ShiftLeftLogicalVariable(RHexVec, Vector256.Create((uint) 28, 24, 20, 16, 12, 8, 4, 0));
 
-            return RHexVecUpper[0];
+            return Vector256.Sum(RHexVec);
         }
     }
 }
