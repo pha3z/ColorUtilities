@@ -72,7 +72,6 @@ namespace HexToIntFast // Note: actual namespace depends on the project name.
     public static unsafe class HexHelpers
     {
         //https://www.asciitable.com/
-        //https://www.asciitable.com/
         private const char StartingPoint = '0';
 
         private const int UpperToLowerCaseOffset = 'a' - 'A'; //This is a positive num
@@ -83,32 +82,36 @@ namespace HexToIntFast // Note: actual namespace depends on the project name.
 
         static HexHelpers()
         {
-            const int TotalEntries = 127 + 1;
+            //Don't allocate HexTable if there's AVX2 support!
+            if (!Avx2.IsSupported)
+            {
+                const int TotalEntries = 127 + 1;
 
-            HexTable = (int*) NativeMemory.AllocZeroed((nuint) TotalEntries * sizeof(int) + 64);
+                HexTable = (int*) NativeMemory.AllocZeroed((nuint) TotalEntries * sizeof(int) + 64);
 
-            //Get the original addr of '0'
-            var ZeroPos = (nint) (HexTable + '0');
+                //Get the original addr of '0'
+                var ZeroPos = (nint) (HexTable + '0');
             
-            //Get next aligned boundary
-            var NewZeroPos = (ZeroPos + (64 - 1)) & ~(64 - 1);
+                //Get next aligned boundary
+                var NewZeroPos = (ZeroPos + (64 - 1)) & ~(64 - 1);
 
-            var ByteOffset = NewZeroPos - ZeroPos;
+                var ByteOffset = NewZeroPos - ZeroPos;
 
-            //We will never deallocate this, so don't bother storing original start
-            HexTable += ByteOffset;
+                //We will never deallocate this, so don't bother storing original start
+                HexTable += ByteOffset;
 
-            byte HexVal = 0;
+                byte HexVal = 0;
 
-            for (var Current = '0'; Current <= '9'; Current++, HexVal++)
-            {
-                HexTable[Current] = HexVal;
-            }
+                for (var Current = '0'; Current <= '9'; Current++, HexVal++)
+                {
+                    HexTable[Current] = HexVal;
+                }
 
-            for (var Current = 'A'; Current <= 'F'; Current++, HexVal++)
-            {
-                HexTable[Current] = HexVal;
-                HexTable[Current + UpperToLowerCaseOffset] = HexVal;
+                for (var Current = 'A'; Current <= 'F'; Current++, HexVal++)
+                {
+                    HexTable[Current] = HexVal;
+                    HexTable[Current + UpperToLowerCaseOffset] = HexVal;
+                }
             }
         }
         
