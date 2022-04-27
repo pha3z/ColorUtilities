@@ -16,13 +16,13 @@ namespace HexToIntFast // Note: actual namespace depends on the project name.
             #if DEBUG
             const string Yes = "a1234F";
             
-            Console.WriteLine(int.Parse(Yes, NumberStyles.HexNumber));
+            Console.WriteLine(int.Parse("FF000000", NumberStyles.HexNumber));
             
-            Console.WriteLine(Yes.AsSpan().RRGGBBHexToRGB32());
+            Console.WriteLine(int.Parse(Yes.AsSpan(), NumberStyles.HexNumber));
             
-            Console.WriteLine(Yes.AsSpan().RRGGBBHexToRGB32_AVX2());
+            Console.WriteLine(Yes.AsSpan().RRGGBBHexToARGB32());
             
-            Console.WriteLine(Yes.AsSpan().RRGGBBHexToRGB32_AVX2_2());
+            Console.WriteLine(Yes.AsSpan().RRGGBBHexToARGB32_AVX2());
             #else
 
             try
@@ -53,19 +53,19 @@ namespace HexToIntFast // Note: actual namespace depends on the project name.
         //[Benchmark]
         public int HexToIntTrumpMcD()
         {
-            return Hex.AsSpan().RRGGBBHexToRGB32_Scalar();
+            return Hex.AsSpan().RRGGBBHexToARGB32_Scalar();
         }
         
         [Benchmark]
         public int HexToIntTrumpMcD_AVX2()
         {
-            return Hex.AsSpan().RRGGBBHexToRGB32_AVX2();
+            return Hex.AsSpan().RRGGBBHexToARGB32_AVX2();
         }
         
         [Benchmark]
         public int HexToIntTrumpMcD_AVX2_V256Sum()
         {
-            return Hex.AsSpan().RRGGBBHexToRGB32_AVX2();
+            return Hex.AsSpan().RRGGBBHexToARGB32_AVX2();
         }
     }
     
@@ -112,21 +112,21 @@ namespace HexToIntFast // Note: actual namespace depends on the project name.
             }
         }
         
-        public static int RRGGBBHexToRGB32(this ReadOnlySpan<char> HexSpan)
+        public static int RRGGBBHexToARGB32(this ReadOnlySpan<char> HexSpan)
         {
             if (Avx2.IsSupported)
             {
-                return RRGGBBHexToRGB32_AVX2(HexSpan);
+                return RRGGBBHexToARGB32_AVX2(HexSpan);
             }
 
             else
             {
-                return RRGGBBHexToRGB32_Scalar(HexSpan);
+                return RRGGBBHexToARGB32_Scalar(HexSpan);
             }
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
-        internal static int RRGGBBHexToRGB32_AVX2(this ReadOnlySpan<char> HexSpan)
+        internal static int RRGGBBHexToARGB32_AVX2(this ReadOnlySpan<char> HexSpan)
         {
             ref var FirstChar = ref MemoryMarshal.GetReference(HexSpan);
 
@@ -142,17 +142,19 @@ namespace HexToIntFast // Note: actual namespace depends on the project name.
 
             Sm0lVec = Avx2.Subtract(Sm0lVec, Vector128.Create((short) StartingPoint));
 
-            Sm0lVec = Avx2.And(Sm0lVec, Vector128.Create(0, 0, short.MaxValue, short.MaxValue, short.MaxValue, short.MaxValue, short.MaxValue, short.MaxValue));
+            //Sm0lVec = Avx2.And(Sm0lVec, Vector128.Create(0, 0, short.MaxValue, short.MaxValue, short.MaxValue, short.MaxValue, short.MaxValue, short.MaxValue));
+            
+            Sm0lVec = Avx2.Or(Sm0lVec, Vector128.Create(15, 15, 0, 0, 0, 0, 0, 0));
             
             var Vec = Avx2.ConvertToVector256Int32(Sm0lVec);
             
-            Vec = Avx2.ShiftLeftLogicalVariable(Vec, Vector256.Create((uint) 0, 0, 20, 16, 12, 8, 4, 0));
+            Vec = Avx2.ShiftLeftLogicalVariable(Vec, Vector256.Create((uint) 28, 24, 20, 16, 12, 8, 4, 0));
 
             return Vector256.Sum(Vec);
         }
         
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal static int RRGGBBHexToRGB32_Scalar(this ReadOnlySpan<char> HexSpan)
+        internal static int RRGGBBHexToARGB32_Scalar(this ReadOnlySpan<char> HexSpan)
         {
             ref var FirstChar = ref MemoryMarshal.GetReference(HexSpan);
 
@@ -170,7 +172,7 @@ namespace HexToIntFast // Note: actual namespace depends on the project name.
 
             var _5 = TablePtr[Unsafe.Add(ref FirstChar, 5)];
 
-            return _0 | _1 | _2 | _3 | _4 | _5;
+            return -16777216 | _0 | _1 | _2 | _3 | _4 | _5;
         }
 
         public static int RRGGBBAAHexToARGB32(this ReadOnlySpan<char> HexSpan)
