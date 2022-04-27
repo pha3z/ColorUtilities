@@ -100,6 +100,7 @@ namespace HexToIntFast // Note: actual namespace depends on the project name.
                 HexTable[Current + UpperToLowerCaseOffset] = HexVal;
                 
                 HexTable2[Current] = HexVal;
+                HexTable2[Current + UpperToLowerCaseOffset] = HexVal;
             }
         }
         
@@ -128,26 +129,24 @@ namespace HexToIntFast // Note: actual namespace depends on the project name.
         {
             ref var FirstChar = ref MemoryMarshal.GetReference(HexSpan);
             
-            var _0 = GetIntFromChar(FirstChar) << 20;
+            var _0 = GetIntFromChar(FirstChar, HexTable2) << 20;
 
-            var _1 = GetIntFromChar(Unsafe.Add(ref FirstChar, 1)) << 16;
+            var _1 = GetIntFromChar(Unsafe.Add(ref FirstChar, 1), HexTable2) << 16;
 
-            var _2 = GetIntFromChar(Unsafe.Add(ref FirstChar, 2)) << 12;
+            var _2 = GetIntFromChar(Unsafe.Add(ref FirstChar, 2), HexTable2) << 12;
 
-            var _3 = GetIntFromChar(Unsafe.Add(ref FirstChar, 3)) << 8;
+            var _3 = GetIntFromChar(Unsafe.Add(ref FirstChar, 3), HexTable2) << 8;
 
-            var _4 = GetIntFromChar(Unsafe.Add(ref FirstChar, 4)) << 4;
+            var _4 = GetIntFromChar(Unsafe.Add(ref FirstChar, 4), HexTable2) << 4;
 
-            var _5 = GetIntFromChar(Unsafe.Add(ref FirstChar, 5));
+            var _5 = GetIntFromChar(Unsafe.Add(ref FirstChar, 5), HexTable2);
 
             return _0 | _1 | _2 | _3 | _4 | _5;
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            static int GetIntFromChar(char Char)
+            static int GetIntFromChar(char Char, byte* HexTablePtr)
             {
-                var LowerCaseMask = ('Z' - Char) >> 31;
-
-                return HexTable2[Char - (UpperToLowerCaseOffset & LowerCaseMask)];
+                return HexTablePtr[Char];
             }
         }
         
