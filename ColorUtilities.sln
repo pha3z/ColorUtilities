@@ -7,7 +7,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ColorUtilitiesTestApp", "Co
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ColorEncoding", "ColorEncoding\ColorEncoding.csproj", "{9C4E12BD-B63C-4804-B595-6939BC14D8A8}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Tests", "Tests\Tests.csproj", "{83BAED09-CBBE-4092-9AA7-E3ED61CF9493}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Tests", "Tests\Tests.csproj", "{9E4C97D2-3AF2-453B-93D6-18BCBC393C34}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -23,10 +23,10 @@ Global
 		{9C4E12BD-B63C-4804-B595-6939BC14D8A8}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{9C4E12BD-B63C-4804-B595-6939BC14D8A8}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{9C4E12BD-B63C-4804-B595-6939BC14D8A8}.Release|Any CPU.Build.0 = Release|Any CPU
-		{83BAED09-CBBE-4092-9AA7-E3ED61CF9493}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{83BAED09-CBBE-4092-9AA7-E3ED61CF9493}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{83BAED09-CBBE-4092-9AA7-E3ED61CF9493}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{83BAED09-CBBE-4092-9AA7-E3ED61CF9493}.Release|Any CPU.Build.0 = Release|Any CPU
+		{9E4C97D2-3AF2-453B-93D6-18BCBC393C34}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9E4C97D2-3AF2-453B-93D6-18BCBC393C34}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9E4C97D2-3AF2-453B-93D6-18BCBC393C34}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9E4C97D2-3AF2-453B-93D6-18BCBC393C34}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

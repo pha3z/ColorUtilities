@@ -90,20 +90,12 @@ namespace Color.Encoding
 
             Sm0lVec = Avx2.Subtract(Sm0lVec, Vector128.Create((short) StartingPoint));
 
-            //Sm0lVec = Avx2.And(Sm0lVec, Vector128.Create(0, 0, short.MaxValue, short.MaxValue, short.MaxValue, short.MaxValue, short.MaxValue, short.MaxValue));
-
-            Console.WriteLine(Sm0lVec);
-            
             Sm0lVec = Avx2.Or(Sm0lVec, Vector128.Create(-1, -1, 0, 0, 0, 0, 0, 0));
 
-            Console.WriteLine(Sm0lVec);
-            
             var Vec = Avx2.ConvertToVector256Int32(Sm0lVec);
 
             Vec = Avx2.ShiftLeftLogicalVariable(Vec, Vector256.Create((uint) 23, 23, 20, 16, 12, 8, 4, 0));
             
-            Console.WriteLine(Vec);
-
             #if NET7_0_OR_GREATER
             return Vector256.Sum(Vec);
             #else
@@ -179,7 +171,7 @@ namespace Color.Encoding
 
             var Vec = Avx2.ConvertToVector256Int32(Sm0lVec);
 
-            Vec = Avx2.ShiftLeftLogicalVariable(Vec, Vector256.Create((uint) 20, 16, 12, 8, 4, 0, 23, 23));
+            Vec = Avx2.ShiftLeftLogicalVariable(Vec, Vector256.Create((uint) 20, 16, 12, 8, 4, 0, 28, 24));
 
             #if NET7_0_OR_GREATER
             return Vector256.Sum(Vec);
