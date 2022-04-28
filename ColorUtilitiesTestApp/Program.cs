@@ -1,13 +1,9 @@
 ﻿using System;
 using System.Globalization;
-using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
-using System.Runtime.Intrinsics;
-using System.Runtime.Intrinsics.X86;
 using BenchmarkDotNet.Attributes;
-using BenchmarkDotNet.Running;
+using Color.Encoding;
 
-namespace HexToIntFast // Note: actual namespace depends on the project name.
+namespace ColorUtilitiesTestApp // Note: actual namespace depends on the project name.
 {
     internal class Program
     {
@@ -15,14 +11,16 @@ namespace HexToIntFast // Note: actual namespace depends on the project name.
         {
             #if DEBUG
             const string Yes = "a1234F";
+
+            var Span = Yes.AsSpan();
             
             Console.WriteLine(int.Parse("FF000000", NumberStyles.HexNumber));
             
-            Console.WriteLine(int.Parse(Yes.AsSpan(), NumberStyles.HexNumber));
+            Console.WriteLine(int.Parse(Span, NumberStyles.HexNumber));
             
-            Console.WriteLine(Yes.AsSpan().RRGGBBHexToARGB32());
+            Console.WriteLine(ColorEncoding.RRGGBBHexToARGB32_Scalar(Span));
             
-            Console.WriteLine(Yes.AsSpan().RRGGBBHexToARGB32_AVX2());
+            Console.WriteLine(ColorEncoding.RRGGBBHexToARGB32_AVX2(Span));
             #else
 
             try
@@ -44,28 +42,22 @@ namespace HexToIntFast // Note: actual namespace depends on the project name.
     {
         private const string Hex = "123456";
 
-        //[Benchmark]
+        [Benchmark]
         public int HexToIntNaive()
         {
             return int.Parse(Hex.AsSpan(), NumberStyles.HexNumber);
         }
         
-        //[Benchmark]
+        [Benchmark]
         public int HexToIntTrumpMcD()
         {
-            return Hex.AsSpan().RRGGBBHexToARGB32_Scalar();
+            return ColorEncoding.RRGGBBHexToARGB32_Scalar(Hex.AsSpan());
         }
         
         [Benchmark]
         public int HexToIntTrumpMcD_AVX2()
         {
-            return Hex.AsSpan().RRGGBBHexToARGB32_AVX2();
-        }
-        
-        [Benchmark]
-        public int HexToIntTrumpMcD_AVX2_V256Sum()
-        {
-            return Hex.AsSpan().RRGGBBHexToARGB32_AVX2();
+            return ColorEncoding.RRGGBBHexToARGB32_AVX2(Hex.AsSpan());
         }
     }
     

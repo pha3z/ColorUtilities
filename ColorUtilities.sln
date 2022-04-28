@@ -5,7 +5,7 @@ VisualStudioVersion = 17.2.32210.308
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ColorUtilitiesTestApp", "ColorUtilitiesTestApp\ColorUtilitiesTestApp.csproj", "{64D635DD-184F-48CF-B0C0-8246BE149C74}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ColorUtils", "ColorUtils\ColorUtils.csproj", "{9C4E12BD-B63C-4804-B595-6939BC14D8A8}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ColorEncoding", "ColorEncoding\ColorEncoding.csproj", "{9C4E12BD-B63C-4804-B595-6939BC14D8A8}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Tests", "Tests\Tests.csproj", "{83BAED09-CBBE-4092-9AA7-E3ED61CF9493}"
 EndProject
